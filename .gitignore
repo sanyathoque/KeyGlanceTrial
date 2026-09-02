@@ -1,0 +1,5 @@
+**/bin/
+**/obj/
+JobServer/data/
+processed-jobs.json
+*.tmp
