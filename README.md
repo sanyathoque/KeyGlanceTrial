@@ -27,14 +27,16 @@ curl.exe -X POST http://localhost:5050/jobs `
   -H "content-type: application/json" `
   -d '{"id":"job-123","client":"Margaret Buttle","year":2025,"dueDate":"2026-09-03","fields":{"Box2":"40.00","Box14":"11019.84","Box22":"1101.96"}}'
 
-# Terminal 3: claim and import the job
+# Terminal 3: continuously claim and import jobs
 dotnet run --project Helper/Helper.csproj -- --server http://localhost:5050 --client "Margaret Buttle" --year 2025
 ```
+
+The helper polls continuously until stopped with `Ctrl+C`. Use `--poll-ms 2000` to change the delay between empty-queue checks, or `--once` to claim at most one job and exit for scripted tests.
 
 To test readback failure, launch MockTax with `--readonly Box22`; the helper should report `partial` and name `Box22`.
 
 ## Testing and failure handling
 
-Run `npm test` in `JobServer/`. The automated tests cover urgency ordering, single-use and concurrent claims, valid completion, and rejection of duplicate completion. Both .NET projects build with `dotnet build`, and the matching-window happy path was exercised end to end with all three fields reported as landed.
+Run `npm test` in `JobServer/`. Four automated tests cover urgency ordering, single-use and concurrent claims, duplicate completion, and input validation. Both .NET projects build with `dotnet build`.
 
-The implementation also handles wrong client/year, multiple windows through exact-title matching, exact `Box2` versus `Box22` lookup, read-only-field mismatch, foreground-window changes, and duplicate local execution. These Windows UI paths require interactive manual testing; they are not currently covered by automated UI tests. The local ledger deliberately favors at-most-once execution: a crash after ledger recording may require manual recovery instead of retrying automatically.
+All nine acceptance scenarios were exercised through the automated queue tests and manual Windows runs, including wrong client/year, exact `Box2` versus `Box22` lookup, read-only-field mismatch, duplicate replay, and two-window selection. Continuous polling also processed multiple jobs without restarting. Windows UI paths are not automated, and the foreground-change guard remains timing-sensitive to test manually. The local ledger deliberately favors at-most-once execution: a crash after ledger recording may require manual recovery instead of automatic retry.

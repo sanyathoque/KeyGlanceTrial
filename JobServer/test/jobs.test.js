@@ -31,11 +31,14 @@ test('claims the earliest due job and does not claim it twice', async () => {
   const { server, base } = await runningServer();
   try {
     await createJob(base, job('later', '2026-09-04'));
+    await createJob(base, job('middle', '2026-09-03'));
     await createJob(base, job('urgent', '2026-09-02'));
     const first = await fetch(`${base}/claim`);
     const second = await fetch(`${base}/claim`);
+    const third = await fetch(`${base}/claim`);
     assert.equal((await first.json()).id, 'urgent');
-    assert.equal((await second.json()).id, 'later');
+    assert.equal((await second.json()).id, 'middle');
+    assert.equal((await third.json()).id, 'later');
     assert.equal((await fetch(`${base}/claim`)).status, 204);
   } finally { await close(server); }
 });
@@ -65,6 +68,22 @@ test('a claimed job can be completed only once', async () => {
     });
     assert.equal(completed.status, 200);
     assert.equal(duplicate.status, 409);
+  } finally { await close(server); }
+});
+
+test('rejects invalid due dates and non-string field values', async () => {
+  const { server, base } = await runningServer();
+  try {
+    const invalidDate = await fetch(`${base}/jobs`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(job('bad-date', '2026-02-30'))
+    });
+    const invalidField = await fetch(`${base}/jobs`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...job('bad-field', '2026-09-02'), fields: { Box2: 40 } })
+    });
+    assert.equal(invalidDate.status, 400);
+    assert.equal(invalidField.status, 400);
   } finally { await close(server); }
 });
 

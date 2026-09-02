@@ -17,8 +17,10 @@ public partial class MainWindow : Window
         var readonlyField = ValueAfter(args, "--readonly");
         if (string.Equals(readonlyField, "Box22", StringComparison.Ordinal))
         {
-            Box22.IsReadOnly = true;
-            Box22.Text = "LOCKED";
+            Box22.TextChanged += (_, _) =>
+            {
+                if (Box22.Text.Length > 0) Box22.Clear();
+            };
         }
     }
 

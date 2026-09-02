@@ -69,8 +69,15 @@ export function validateJob(input) {
     }
   }
   if (!Number.isInteger(input.year)) throw new Error('year must be an integer');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dueDate) ||
+      new Date(`${input.dueDate}T00:00:00Z`).toISOString().slice(0, 10) !== input.dueDate) {
+    throw new Error('dueDate must be a valid date in YYYY-MM-DD format');
+  }
   if (!input.fields || typeof input.fields !== 'object' || Array.isArray(input.fields)) {
     throw new Error('fields must be an object');
+  }
+  if (Object.values(input.fields).some(value => typeof value !== 'string')) {
+    throw new Error('field values must be strings');
   }
   return input;
 }
