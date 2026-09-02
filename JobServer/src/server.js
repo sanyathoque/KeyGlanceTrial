@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { pathToFileURL } from 'node:url';
 import { openDatabase } from './db.js';
 import { JobRepository, validateJob } from './jobs.js';
 
@@ -73,7 +74,7 @@ export function createServer({ dbPath = ':memory:' } = {}) {
   return server;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = Number(process.env.PORT ?? 5050);
   const server = createServer({ dbPath: process.env.DB_PATH ?? './data/jobs.db' });
   server.listen(port, () => console.log(`KeyGlance JobServer listening on http://localhost:${port}`));
